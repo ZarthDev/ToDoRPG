@@ -1,3 +1,24 @@
+<?php 
+    session_start();
+    if (!isset($_SESSION['user'])) {
+        header('Location: index.php');
+        exit();
+    }
+
+    $host = 'localhost';
+    $user = 'root';
+    $password = '';
+    $database = 'toDoRPG';
+
+    $conn = new PDO("mysql:host=$host;dbname=$database", $user, $password);
+    $stmt = $conn->prepare("SELECT * FROM tb_tasks WHERE id_user = :user_id");
+    $stmt->bindParam(':user_id', $_SESSION['user_info']['id_user']);
+    $stmt->execute();
+    $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    print_r($tasks);
+?>
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -87,46 +108,46 @@
 
                     <!-- Criar tarefa -->
                     <div class="input-group mb-4">
-                        <input type="text" class="form-control" placeholder="Nova missão...">
-                        <button class="btn btn-danger">Adicionar</button>
+                        <form action="add_task.php" method="POST">
+                            <div class="input-group">
+                                <input type="text" name="task_name" class="form-control" placeholder="Nova missão...">
+                                <button type="submit" class="btn btn-danger">Adicionar</button>
+                            </div>
+                        </form>
                     </div>
 
                     <!-- Lista de tarefas -->
-                    <div class="task-item d-flex justify-content-between align-items-center">
-                        <span>Explorar a Delegacia (Lv. 1)</span>
-                        <div>
-                            <button class="btn btn-sm btn-success me-2">Concluir</button>
-                            <button class="btn btn-sm btn-outline-danger">Excluir</button>
+                    <?php foreach ($tasks as $task): ?>
+                        <div class="task-item d-flex justify-content-between align-items-center">
+                            <span><?php echo htmlspecialchars($task['description_task']); ?></span>
+                            <div>
+                                <form action="conclude_task.php" method="POST" class="d-inline">
+                                    <button class="btn btn-sm btn-success me-2">
+                                        <input type="hidden" name="task_id" value="<?php echo $task['id_task']; ?>">
+                                        Concluir
+                                    </button>
+                                </form>
+                                <form action="delete_task.php" method="POST" class="d-inline">
+                                    <button class="btn btn-sm btn-outline-danger">
+                                        <input type="hidden" name="task_id" value="<?php echo $task['id_task']; ?>">
+                                        Excluir
+                                    </button>
+                                </form>
+                            </div>
                         </div>
-                    </div>
-
-                    <div class="task-item d-flex justify-content-between align-items-center">
-                        <span>Coletar Ervas Verdes</span>
-                        <div>
-                            <button class="btn btn-sm btn-success me-2">Concluir</button>
-                            <button class="btn btn-sm btn-outline-danger">Excluir</button>
-                        </div>
-                    </div>
-
-                    <div class="task-item d-flex justify-content-between align-items-center">
-                        <span>Sobreviver ao Mr. X</span>
-                        <div>
-                            <button class="btn btn-sm btn-success me-2">Concluir</button>
-                            <button class="btn btn-sm btn-outline-danger">Excluir</button>
-                        </div>
-                    </div>
+                    <?php endforeach; ?>
                 </div>
             </main>
 
             <!-- SIDEBAR / PERFIL -->
             <aside class="col-lg-3 col-md-4">
                 <div class="card p-3 text-center text-light">
-                    <h5 class="mb-2">Sobrevivente</h5> 
-                    <p class="text-light mb-1">Nível 3</p>
+                    <h5 class="mb-2"><?php echo $_SESSION['user_info']['level_user']; ?></h5> 
+                    <p class="text-light mb-1"><?php echo $_SESSION['user_info']['name_user']; ?></p>
 
                     <div class="mb-2">XP</div>
                     <div class="progress mb-3">
-                        <div class="progress-bar" style="width: 65%;">650 / 1000</div>
+                        <div class="progress-bar" style="width: <?php echo ($_SESSION['user_info']['XP_user'] / 1000 * 100) ?>%;"> <?php echo $_SESSION['user_info']['XP_user']; ?> / 10000</div>
                     </div>
 
                     <ul class="list-group list-group-flush text-start">
@@ -134,12 +155,11 @@
                             🧠 Missões concluídas: 12
                         </li>
                         <li class="list-group-item bg-transparent text-light border-danger">
-                            ⚔️ Rank: Sobrevivente
+                            ⚔️ Rank: <?php echo $_SESSION['user_info']['level_user']; ?>
                         </li>
                     </ul>
                 </div>
             </aside>
-
         </div>
     </div>
 

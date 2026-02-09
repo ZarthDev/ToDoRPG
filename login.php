@@ -26,6 +26,8 @@
 
         if ($stmt->rowCount() > 0) {
             $_SESSION['user'] = $username;
+            $_SESSION['user_info'] = $stmt->fetch(PDO::FETCH_ASSOC);
+
             header('Location: home.php');
             exit();
         } else {
